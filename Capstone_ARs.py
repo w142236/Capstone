@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 from mpl_toolkits.basemap import Basemap
 #Task 1: Read in the data file 
-filename = "C:/Users/willk/Desktop/Capstone.nc"
+filename = "C:/Users/willk/Code_Research/Capstone/Capstone.nc"
 
 fh = Dataset(filename, mode =  "r")
 lons = fh.variables['lon'][:]
@@ -25,11 +25,13 @@ heights = fh.variables['zg'][:]#same dims
 rel_humidity = fh.variables['hur'][:]#same dims
 
 #Task 2: Build Data Structure###################################################################################################
-    #Subtask: Build function to calculate IVT
-#def IVT(q,V):# IVT = (1/g) * S_1000^300 q V dP
-#    g = -9.8
-#    (1/g) * (-700) * q * 700
-#    #Main Task
+ 
+##Custom class file
+import calcIVT as calcIVT
+
+IVT_object = calcIVT.IVT(spec_humidity,u_wind,time)
+IVTs = IVT_object.calcIVT_Trapz()
+
 u_wind_dict = {}
 spec_humid_dict = {}
 ivt_dict = {}
@@ -43,10 +45,10 @@ for times in dict['u_wind']:
     for i in range(len(levs)): #Tried to do this in one line. Cannot hash iterable item
         u_wind_dict[times].update({levs[i]:np.array([u_wind[int(times)][i]])})
         spec_humid_dict[times].update({levs[i]:np.array([spec_humidity[int(times)][i]])})
-        #ivt_dict[times].update({levs[i]:np.array([])}) Will need to calculate this later
+        ivt_dict[times].update({levs[i]:np.array([IVTs[int(times)][:]])}) 
+ 
 
-     
-    
+        
 
 #Task 3: Build Map ###################################################################################################
 lon_0 = np.mean(lons)
@@ -56,6 +58,7 @@ m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
 
 
 #Task 4: plotv###################################################################################################
+
 for times in dict['u_wind']:
     #print(yearmonth)
     for levels in dict['u_wind'][times]:
@@ -104,21 +107,22 @@ for times in dict['u_wind']:
         plt.tight_layout()
         plt.show()
         #
-        #ax3 = fig.add_subplot(223)
-        #cs3 = m.pcolor(lons, lats , np.squeeze(ivt_dict[times][levels]), cmap = 'Blues')
-        #m.drawparallels(np.arange(-90.,91.,30.))
-        #m.drawmeridians(np.arange(-180.,181.,60.))
+        ax3 = fig.add_subplot(223)
+        cs3 = m.pcolor(lons, lats , np.squeeze(ivt_dict[times][levels]), cmap = 'Blues')
+        m.drawparallels(np.arange(-90.,91.,30.))
+        m.drawmeridians(np.arange(-180.,181.,60.))
 
-        #m.drawcoastlines()
-        #m.drawstates()
-        #m.drawcountries()
+        m.drawcoastlines()
+        m.drawstates()
+        m.drawcountries()
 
-        #I have cahnge somehting here
+        #I have change somehting here
         
-        #cbar = m.colorbar(cs3, location='right', pad="10%")
-        #cbar.set_label('kg/ms')
+        cbar = m.colorbar(cs3, location='right', pad="10%")
+        cbar.set_label('kg/ms')
         
-        #ax3.set_title('Integrated Vapor Transport at\n {} hpa: Day: {}'.format(levels, times))
+        ax3.set_title('Integrated Vapor Transport at\n {} hpa: Day: {}'.format(levels, times))
+        
         plt.tight_layout()
         plt.show()
     
